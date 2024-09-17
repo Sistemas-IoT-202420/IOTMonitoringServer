@@ -56,18 +56,21 @@ def analyze_lux():
         user = item["station__user__username"]
 
         if item["check_value"] > max_value:
-            message = "APAGAR LUCES".format(variable, min_value, max_value)
+            message = "APAGAR LUCES"
             topic = "{}/{}/{}/{}/in".format(country, state, city, user)
             print(datetime.now(), "Sending alert to {} {}".format(topic, variable))
             client.publish(topic, message)
             alerts += 1
-
-        if item["check_value"] < min_value:
-            message = "ENCENDER LUCES".format(variable, min_value, max_value)
+        elif item["check_value"] < min_value:
+            message = "ENCENDER LUCES"
             topic = "{}/{}/{}/{}/in".format(country, state, city, user)
             print(datetime.now(), "Sending alert to {} {}".format(topic, variable))
             client.publish(topic, message)
             alerts += 1
+        else:
+            message = "OK"
+            topic = "{}/{}/{}/{}/in".format(country, state, city, user)
+            client.publish(topic, message)
 
     print(len(aggregation), "dispositivos revisados")
     print(alerts, "alertas enviadas")
