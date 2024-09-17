@@ -18,7 +18,10 @@ def analyze_lux():
 
     print("Calculando alertas...")
 
-    data = Data.objects.filter(base_time__gte=datetime.now() - timedelta(minutes=10))
+    data = Data.objects.filter(
+        base_time__gte=datetime.now() - timedelta(minutes=60),
+        measurement__name="luminosidad",
+    )
 
     aggregation = (
         data.annotate(check_value=Avg("avg_value"))
@@ -42,29 +45,29 @@ def analyze_lux():
     )
     alerts = 0
     for item in aggregation:
-        if item["measurement__name"] == "luminosidad":
-            variable = item["measurement__name"]
-            max_value = item["measurement__max_value"] or 0
-            min_value = item["measurement__min_value"] or 0
 
-            country = item["station__location__country__name"]
-            state = item["station__location__state__name"]
-            city = item["station__location__city__name"]
-            user = item["station__user__username"]
+        variable = item["measurement__name"]
+        max_value = item["measurement__max_value"] or 0
+        min_value = item["measurement__min_value"] or 0
 
-            if item["check_value"] > max_value:
-                message = "APAGAR LUCES".format(variable, min_value, max_value)
-                topic = "{}/{}/{}/{}/in".format(country, state, city, user)
-                print(datetime.now(), "Sending alert to {} {}".format(topic, variable))
-                client.publish(topic, message)
-                alerts += 1
+        country = item["station__location__country__name"]
+        state = item["station__location__state__name"]
+        city = item["station__location__city__name"]
+        user = item["station__user__username"]
 
-            if item["check_value"] < min_value:
-                message = "ENCENDER LUCES".format(variable, min_value, max_value)
-                topic = "{}/{}/{}/{}/in".format(country, state, city, user)
-                print(datetime.now(), "Sending alert to {} {}".format(topic, variable))
-                client.publish(topic, message)
-                alerts += 1
+        if item["check_value"] > max_value:
+            message = "APAGAR LUCES".format(variable, min_value, max_value)
+            topic = "{}/{}/{}/{}/in".format(country, state, city, user)
+            print(datetime.now(), "Sending alert to {} {}".format(topic, variable))
+            client.publish(topic, message)
+            alerts += 1
+
+        if item["check_value"] < min_value:
+            message = "ENCENDER LUCES".format(variable, min_value, max_value)
+            topic = "{}/{}/{}/{}/in".format(country, state, city, user)
+            print(datetime.now(), "Sending alert to {} {}".format(topic, variable))
+            client.publish(topic, message)
+            alerts += 1
 
     print(len(aggregation), "dispositivos revisados")
     print(alerts, "alertas enviadas")
