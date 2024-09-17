@@ -20,7 +20,7 @@ def analyze_lux():
 
     data = Data.objects.filter(
         base_time__gte=datetime.now() - timedelta(minutes=5),
-        measurement__name="luminosidad",
+        # measurement__name="luminosidad",
     )
 
     aggregation = (
